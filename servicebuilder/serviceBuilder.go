@@ -3,6 +3,7 @@ package servicebuilder
 import (
 	"log"
 	"strings"
+
 	"github.com/bndr/gopencils"
 	"github.com/essentier/spickspan/config"
 )
@@ -13,9 +14,9 @@ func createServiceBuilder(serviceConfig config.Service, providerUrl string, toke
 }
 
 type serviceBuilder struct {
-	nomockApi   *gopencils.Resource
+	nomockApi     *gopencils.Resource
 	serviceConfig config.Service
-	token		string
+	token         string
 }
 
 func (p *serviceBuilder) buildService() error {
@@ -23,8 +24,8 @@ func (p *serviceBuilder) buildService() error {
 		panic("Could not build a service that is not a source project.")
 	}
 
- 	log.Printf("going to git push code of service %v", p.serviceConfig.ServiceName)
-	err := gitPush(p.serviceConfig.ServiceName, p.serviceConfig.ProjectSrcRoot, p.nomockApi.Api.BaseUrl.String() + "/nomockbuilder", p.token)
+	log.Printf("going to git push code of service %v", p.serviceConfig.ServiceName)
+	err := gitPush(p.serviceConfig.ServiceName, p.serviceConfig.ProjectSrcRoot, p.nomockApi.Api.BaseUrl.String()+"/nomockbuilder", p.token)
 	if err != nil {
 		return err
 	}
@@ -36,13 +37,15 @@ func (p *serviceBuilder) buildService() error {
 func (p *serviceBuilder) buildServiceOnNomockBuilder(serviceName string) error {
 	log.Printf("building service %v on nomock builder", serviceName)
 	builderResource := p.nomockApi.Res("nomockbuilder/build/" + serviceName)
-	builderResource.SetHeader("Authorization", "Bearer " + p.token)
+	builderResource.SetHeader("Authorization", "Bearer "+p.token)
 	_, err := builderResource.Get()
 	return err
 }
 
 func gitPush(serviceName string, projectDir string, builderUrl string, token string) error {
 	log.Printf("gitpusher.Push project dir: %v", projectDir)
+	gitVersion, _ := runCmd("git", "--version")
+	log.Printf("git version is %v", gitVersion.String())
 	remoteUrl := getEssentierGitRemote(serviceName, builderUrl, token)
 	git := &gitProject{projectDir: projectDir, err: nil}
 	originalBranch := git.getCurrentBranch()

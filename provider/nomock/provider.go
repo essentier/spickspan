@@ -16,7 +16,7 @@ import (
 
 const (
 	noReleaseServiceID   string = "noReleaseServiceID"
-	containerImagePrefix string = "gcr.io/nomock/" // IP:5000/nomock/
+	containerImagePrefix string = "gcr.io/essentier-nomock/" // IP:5000/nomock/
 )
 
 func CreateProvider() model.Provider {
@@ -97,7 +97,7 @@ func (p *TestingProvider) createService(serviceConfig config.Service) (model.Ser
 
 	servicesResource := p.nomockApi.Res("nomockserver/services", &newService)
 	if serviceConfig.IsSourceProject() {
-		serviceConfig.ContainerImage = containerImagePrefix + userId + "/" + serviceConfig.ServiceName + ":latest"
+		serviceConfig.ContainerImage = containerImagePrefix + userId + "_" + serviceConfig.ServiceName + ":latest"
 	}
 	log.Printf("service config %#v", serviceConfig)
 
