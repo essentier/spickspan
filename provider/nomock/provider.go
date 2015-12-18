@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/bndr/gopencils"
-	"github.com/essentier/authutil"
+	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
 	"github.com/go-errors/errors"
@@ -90,7 +90,7 @@ func (p *TestingProvider) GetService(serviceName string) (model.Service, error) 
 
 func (p *TestingProvider) createService(serviceConfig config.Service) (model.Service, error) {
 	var newService model.Service
-	userId, err := authutil.GetSubjectInToken(p.token)
+	userId, err := nomockutil.GetSubjectInToken(p.token)
 	if err != nil {
 		return newService, err
 	}
