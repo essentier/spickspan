@@ -1,16 +1,17 @@
 package servicebuilder
 
 import (
-	"log"
 	"bytes"
+	"log"
 	"strings"
-	"os/exec"
+
+	"github.com/essentier/nomockutil"
 	"github.com/go-errors/errors"
 )
 
 type gitProject struct {
 	projectDir string
-	err error
+	err        error
 	stashCount int
 }
 
@@ -20,11 +21,11 @@ func (g *gitProject) init() {
 
 func (g *gitProject) pull(remoteUrl string, branchName string) {
 	if g.err != nil {
-        return
-    }
+		return
+	}
 
-    // This will fail if the project is pushed to essentier nomock the first time. That is okay.
-	runCmd("git", "-C", g.projectDir, "pull", "-s", "ours", remoteUrl, branchName)
+	// This will fail if the project is pushed to essentier nomock the first time. That is okay.
+	nomockutil.RunCmd("git", "-C", g.projectDir, "pull", "-s", "ours", remoteUrl, branchName)
 }
 
 func (g *gitProject) applyStash() {
@@ -53,10 +54,10 @@ func (g *gitProject) push(remoteUrl string, branchName string) {
 
 func (g *gitProject) commit(message string) {
 	if g.err != nil {
-        return
-    }
+		return
+	}
 
-	out, err := runCmd("git", "-C", g.projectDir, "commit", "-m", message)
+	out, _, err := nomockutil.RunCmd("git", "-C", g.projectDir, "commit", "-m", message)
 	if err != nil {
 		if !strings.Contains(out.String(), "clean") {
 			g.err = err
@@ -67,15 +68,15 @@ func (g *gitProject) commit(message string) {
 func (g *gitProject) stashAll() {
 	out := g.runGitCmd("git", "-C", g.projectDir, "stash", "save", "-u")
 	if g.err != nil {
-        return
-    }
+		return
+	}
 
 	if strings.Contains(out.String(), "HEAD") {
 		g.stashCount++
 	}
 }
 
-func (g *gitProject) getCurrentBranch() (string) {
+func (g *gitProject) getCurrentBranch() string {
 	out := g.runGitCmd("git", "-C", g.projectDir, "branch")
 	if g.err != nil {
 		return ""
@@ -101,7 +102,7 @@ func (g *gitProject) deferredPopStashed() {
 		return
 	}
 
-	_, err := runCmd("git", "-C", g.projectDir, "stash", "pop")
+	_, _, err := nomockutil.RunCmd("git", "-C", g.projectDir, "stash", "pop")
 	if err != nil {
 		log.Printf("Error when trying to pop stashed %#v", err)
 	} else {
@@ -110,14 +111,14 @@ func (g *gitProject) deferredPopStashed() {
 }
 
 func (g *gitProject) deferredDeleteBranch(branchName string) {
-	_, err := runCmd("git", "-C", g.projectDir, "branch", "-D", branchName)
+	_, _, err := nomockutil.RunCmd("git", "-C", g.projectDir, "branch", "-D", branchName)
 	if err != nil {
 		log.Printf("Error when trying to delete the nomock branch %#v", err)
 	}
 }
 
 func (g *gitProject) deferredCheckout(originalBranch string) {
-	_, err := runCmd("git", "-C", g.projectDir, "checkout", originalBranch)
+	_, _, err := nomockutil.RunCmd("git", "-C", g.projectDir, "checkout", originalBranch)
 	if err != nil {
 		log.Printf("Error when trying to checkout original branch %#v", err)
 	}
@@ -125,30 +126,13 @@ func (g *gitProject) deferredCheckout(originalBranch string) {
 
 func (g *gitProject) runGitCmd(name string, args ...string) *bytes.Buffer {
 	if g.err != nil {
-        return nil
-    }
+		return nil
+	}
 
-	out, err := runCmd(name, args...)
+	out, _, err := nomockutil.RunCmd(name, args...)
 	if err != nil {
 		g.err = err
 	}
 
 	return out
-}
-
-func runCmd(name string, args ...string) (*bytes.Buffer, error) {
-	log.Printf("%v %v", name, args)
-	cmd := exec.Command(name, args...)
-	var outBuffer bytes.Buffer
-	var errBuffer bytes.Buffer
-	cmd.Stdout = &outBuffer
-	cmd.Stderr = &errBuffer
-	err := cmd.Run()
-	log.Println(errBuffer.String()) // Consider: return &e to caller
-	//log.Println(outBuffer.String())
-	var e error = nil
-	if err != nil {
-		e = errors.Wrap(err, 1)
-	} 
-	return &outBuffer, e
 }

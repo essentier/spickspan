@@ -4,50 +4,80 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
+
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
 )
 
-func BuildAll() {
-	builder := createServicesBuilder()
-	builder.buildAllServices()
+type serviceBuildErr struct {
+	serviceName string
+	err         error
 }
 
-func createServicesBuilder() *servicesBuilder {
+type servicesBuildErr struct {
+	errors []serviceBuildErr
+}
+
+func (s *servicesBuildErr) Error() string {
+	errStr := ""
+	for _, err := range s.errors {
+		errStr += err.serviceName + "failed to build with error: " + err.err.Error() + "\n"
+	}
+	return errStr
+}
+
+func BuildAll() error {
+	builder, err := createServicesBuilder()
+	if err != nil {
+		return err
+	}
+	errors := builder.buildAllServices()
+	return &servicesBuildErr{errors: errors}
+}
+
+func createServicesBuilder() (*servicesBuilder, error) {
 	configModel, err := config.GetConfig()
 	if err != nil {
-		panic("Could not find spickspan config file.")
+		return nil, err
 	}
 
 	sb := &servicesBuilder{config: configModel}
 	sb.init()
-	return sb
+	return sb, nil
 }
 
 type servicesBuilder struct {
-	config      config.Model
-	token		string
+	config config.Model
+	token  string
 }
 
-func (p *servicesBuilder) buildAllServices() {
+func (p *servicesBuilder) buildAllServices() []serviceBuildErr {
 	allServices := collectAllSourceServices(p.config)
-	p.buildServices(allServices)	
+	return p.buildServices(allServices)
 }
 
-func (p *servicesBuilder) buildServices(allServices map[string]config.Service) {
-	var wg sync.WaitGroup
+func (p *servicesBuilder) buildServices(allServices map[string]config.Service) []serviceBuildErr {
+	resultsChan := make(chan serviceBuildErr)
 	for _, serviceConfig := range allServices { //build services concurrently
-		wg.Add(1)
-		go buildService(serviceConfig, &wg, p.config.CloudProvider.Url, p.token)
+		go buildService(serviceConfig, p.config.CloudProvider.Url, p.token, resultsChan)
 	}
-	wg.Wait() // wait for all the building of services to complete
+
+	failedBuilds := []serviceBuildErr{}
+	for i := 0; i < len(allServices); i++ {
+		r := <-resultsChan
+		if r.err != nil {
+			failedBuilds = append(failedBuilds, r)
+		}
+	}
+	return failedBuilds
 }
 
-func buildService(serviceConfig config.Service, wg *sync.WaitGroup, providerUrl string, token string) {
-	defer wg.Done()
+func buildService(serviceConfig config.Service, providerUrl string,
+	token string, resultsChan chan serviceBuildErr) {
+	//defer wg.Done()
 	serviceBuilder := createServiceBuilder(serviceConfig, providerUrl, token)
-	serviceBuilder.buildService() //TODO process the error
+	err := serviceBuilder.buildService()
+	resultsChan <- serviceBuildErr{serviceName: serviceConfig.ServiceName, err: err}
 }
 
 func (p *servicesBuilder) init() {
@@ -64,25 +94,25 @@ func collectAllSourceServices(configModel config.Model) map[string]config.Servic
 func collectSourceServices(configModel config.Model, serviceMap map[string]config.Service) {
 	for serviceName, serviceConfig := range configModel.Services {
 		if !serviceConfig.IsSourceProject() {
-			log.Printf("Service %v is not a source project. Skip.", serviceName)
+			//log.Printf("Service %v is not a source project. Skip.", serviceName)
 			continue
 		}
 
 		if _, exists := serviceMap[serviceConfig.ServiceName]; exists {
-			log.Printf("Service %v is already visited. Skip.", serviceName)
+			//log.Printf("Service %v is already visited. Skip.", serviceName)
 			continue // Service already visited. Skip.
 		}
 
 		log.Printf("Found new source service %v.", serviceName)
 		serviceMap[serviceName] = serviceConfig
-		
+
 		//The service is a source project. It may have its own spickspan config.
 		fullFileName := filepath.Join(serviceConfig.ProjectSrcRoot, config.SpickSpanConfigFile)
-		log.Printf("Check if service %v has spickspan file %v.", serviceName, fullFileName)
+		//log.Printf("Check if service %v has spickspan file %v.", serviceName, fullFileName)
 		_, err := os.Stat(fullFileName)
 		if os.IsNotExist(err) {
 			// The service does not have its own spickspan conifg. Move on.
-			log.Printf("Service %v does not have its own spickspan config.", serviceName)
+			//log.Printf("Service %v does not have its own spickspan config.", serviceName)
 			continue
 		}
 

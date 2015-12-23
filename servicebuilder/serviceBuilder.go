@@ -6,6 +6,7 @@ import (
 
 	"github.com/bndr/gopencils"
 	"github.com/essentier/spickspan/config"
+	"github.com/go-errors/errors"
 )
 
 func createServiceBuilder(serviceConfig config.Service, providerUrl string, token string) *serviceBuilder {
@@ -21,10 +22,9 @@ type serviceBuilder struct {
 
 func (p *serviceBuilder) buildService() error {
 	if !p.serviceConfig.IsSourceProject() {
-		panic("Could not build a service that is not a source project.")
+		return errors.New("Could not build a service that is not a source project.")
 	}
 
-	log.Printf("going to git push code of service %v", p.serviceConfig.ServiceName)
 	err := gitPush(p.serviceConfig.ServiceName, p.serviceConfig.ProjectSrcRoot, p.nomockApi.Api.BaseUrl.String()+"/nomockbuilder", p.token)
 	if err != nil {
 		return err
