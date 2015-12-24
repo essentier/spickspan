@@ -11,7 +11,7 @@ import (
 	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
-	"github.com/go-errors/errors"
+	"github.com/essentier/spickspan/provider"
 )
 
 const (
@@ -20,24 +20,29 @@ const (
 )
 
 func CreateProvider() model.Provider {
-	config, err := config.GetConfig()
-	if err != nil {
-		panic("Could not find spickspan config file.")
-	}
-
-	return &TestingProvider{config: config}
+	return &TestingProvider{}
 }
 
 type TestingProvider struct {
-	config    config.Model
 	nomockApi *gopencils.Resource
 	token     string
 }
 
-func (p *TestingProvider) Init() {
-	cloudProvider := p.config.CloudProvider
-	p.token = model.LoginToEssentier(cloudProvider.Url, cloudProvider.Username, cloudProvider.Password)
+func (p *TestingProvider) Init() error {
+	config, err := provider.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	cloudProvider := config.CloudProvider
+	token, err := model.LoginToEssentier(cloudProvider.Url, cloudProvider.Username, cloudProvider.Password)
+	if err != nil {
+		return err
+	}
+
+	p.token = token
 	p.nomockApi = gopencils.Api(cloudProvider.Url) //  + "/nomockserver"
+	return nil
 }
 
 func (p *TestingProvider) Detect() bool {
@@ -47,6 +52,10 @@ func (p *TestingProvider) Detect() bool {
 
 func (p *TestingProvider) Release(service model.Service) error {
 	log.Printf("Releasing service %v", service)
+	if service.IP == noReleaseServiceID {
+		return nil
+	}
+
 	res := p.nomockApi.Res("nomockserver/services")
 	res = res.Id(service.Id)
 	res.SetHeader("Authorization", "Bearer "+p.token)
@@ -54,22 +63,13 @@ func (p *TestingProvider) Release(service model.Service) error {
 	return err
 }
 
-func (p *TestingProvider) GetServiceConfig(serviceName string) (config.Service, bool) {
-	serviceConfig, found := p.config.Services[serviceName] //p.findServiceConfig(serviceName)
-	return serviceConfig, found
-}
-
 func (p *TestingProvider) GetService(serviceName string) (model.Service, error) {
 	//When this provider is asked for a service,
 	//it will find the service's configuration in the config file
 	//and use that configuration to start up the service in the testing cloud.
-	serviceConfig, found := p.GetServiceConfig(serviceName)
-	if !found {
-		return model.Service{}, errors.New("Could not find service " + serviceName)
-	}
-
-	if serviceConfig.IP != "" {
-		return model.Service{Id: noReleaseServiceID, IP: serviceConfig.IP, Port: serviceConfig.Port}, nil
+	service, serviceConfig, err := provider.GetServiceAndConfig(serviceName)
+	if err != nil || service.Id != "" {
+		return service, err
 	}
 
 	newService, err := p.createService(serviceConfig)

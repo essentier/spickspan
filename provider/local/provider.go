@@ -1,46 +1,31 @@
 package local
 
 import (
-	"errors"
 	"os"
 	"strings"
 
-	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
+	"github.com/essentier/spickspan/provider"
 )
 
 func CreateProvider() model.Provider {
-	config, err := config.GetConfig()
-	if err != nil {
-		panic("Could not find spickspan config file.")
-	}
-
-	return &localProvider{config: config}
+	return &localProvider{}
 }
 
 type localProvider struct {
-	config config.Model
 }
 
-func (p *localProvider) findServiceConfig(serviceName string) config.Service {
-	var serviceConfig config.Service
-	for _, serviceConfig = range p.config.Services {
-		if serviceConfig.ServiceName == serviceName {
-			break
-		}
-	}
-	return serviceConfig
+func (p *localProvider) Init() error {
+	return nil
 }
-
-func (p *localProvider) Init() {}
 
 func (p *localProvider) GetService(serviceName string) (model.Service, error) {
-	serviceConfig := p.findServiceConfig(serviceName)
-	if serviceConfig.ServiceName == "" {
-		return model.Service{}, errors.New("Could not find service " + serviceName)
+	service, serviceConfig, err := provider.GetServiceAndConfig(serviceName)
+	if err != nil || service.Id != "" {
+		return service, err
 	}
 
-	return model.Service{IP: "127.0.0.1", Port: serviceConfig.Port}, nil
+	return model.Service{Protocol: serviceConfig.Protocol, IP: "127.0.0.1", Port: serviceConfig.Port}, nil
 }
 
 func (p *localProvider) Detect() bool {

@@ -7,43 +7,23 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
-)
-
-const (
-	noReleaseServiceID string = "noReleaseServiceID"
+	"github.com/essentier/spickspan/provider"
 )
 
 func CreateProvider() model.Provider {
-	config, err := config.GetConfig()
-	if err != nil {
-		panic("Could not find spickspan config file.")
-	}
-
-	return &kubeProvider{config: config}
+	return &kubeProvider{}
 }
 
 type kubeProvider struct {
-	config config.Model
-}
-
-func (p *kubeProvider) getServiceConfig(serviceName string) (config.Service, bool) {
-	serviceConfig, found := p.config.Services[serviceName] //p.findServiceConfig(serviceName)
-	return serviceConfig, found
 }
 
 func (p *kubeProvider) GetService(serviceName string) (model.Service, error) {
-	serviceConfig, found := p.getServiceConfig(serviceName)
-	if !found {
-		return model.Service{}, errors.New("Could not find service " + serviceName)
+	service, serviceConfig, err := provider.GetServiceAndConfig(serviceName)
+	if err != nil || service.Id != "" {
+		return service, err
 	}
 
-	if serviceConfig.IP != "" {
-		return model.Service{Id: noReleaseServiceID, IP: serviceConfig.IP, Port: serviceConfig.Port}, nil
-	}
-
-	var err error = nil
 	serviceName = strings.ToUpper(serviceName)
 	serviceName = strings.Replace(serviceName, "-", "_", -1)
 	serviceHostEnv := serviceName + "_SERVICE_HOST"
@@ -54,10 +34,12 @@ func (p *kubeProvider) GetService(serviceName string) (model.Service, error) {
 
 	servicePortEnv := serviceName + "_SERVICE_PORT"
 	port, err := getPort(servicePortEnv)
-	return model.Service{IP: ip, Port: port}, err
+	return model.Service{Protocol: serviceConfig.Protocol, IP: ip, Port: port}, err
 }
 
-func (p *kubeProvider) Init() {}
+func (p *kubeProvider) Init() error {
+	return nil
+}
 
 func getPort(envVar string) (int, error) {
 	var err error = nil
