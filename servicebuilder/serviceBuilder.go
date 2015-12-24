@@ -2,9 +2,11 @@ package servicebuilder
 
 import (
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/bndr/gopencils"
+	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/go-errors/errors"
 )
@@ -44,8 +46,11 @@ func (p *serviceBuilder) buildServiceOnNomockBuilder(serviceName string) error {
 
 func gitPush(serviceName string, projectDir string, builderUrl string, token string) error {
 	log.Printf("gitpusher.Push project dir: %v", projectDir)
-	gitVersion, _ := runCmd("git", "--version")
-	log.Printf("git version is %v", gitVersion.String())
+	gitDir := filepath.Join(projectDir, ".git")
+	if !nomockutil.Exists(gitDir) {
+		return errors.Errorf("Project %v is not initialized with git. Use 'git init' to initialize the project.", projectDir)
+	}
+
 	remoteUrl := getEssentierGitRemote(serviceName, builderUrl, token)
 	git := &gitProject{projectDir: projectDir, err: nil}
 	originalBranch := git.getCurrentBranch()
