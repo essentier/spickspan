@@ -89,7 +89,7 @@ func (p *TestingProvider) GetService(serviceName string) (model.Service, error) 
 }
 
 func (p *TestingProvider) createService(serviceConfig config.Service) (model.Service, error) {
-	var newService model.Service
+	newService := model.Service{Protocol: serviceConfig.Protocol}
 	userId, err := nomockutil.GetSubjectInToken(p.token)
 	if err != nil {
 		return newService, err
@@ -99,13 +99,13 @@ func (p *TestingProvider) createService(serviceConfig config.Service) (model.Ser
 	if serviceConfig.IsSourceProject() {
 		serviceConfig.ContainerImage = containerImagePrefix + userId + "_" + serviceConfig.ServiceName + ":latest"
 	}
-	log.Printf("service config %#v", serviceConfig)
+	log.Printf("service config %v", serviceConfig)
 
 	servicesResource.SetHeader("Authorization", "Bearer "+p.token)
 	_, err = servicesResource.Post(serviceConfig)
 	if err != nil {
-		log.Printf("Failed to call the service rest api. Error is: %#v. Error string is %v", err, err.Error())
+		log.Printf("Failed to call the service rest api. Error is: %v. Error string is %v", err, err.Error())
 	}
-	log.Printf("service is: %#v", newService)
+	log.Printf("service is: %v", newService)
 	return newService, nil
 }
