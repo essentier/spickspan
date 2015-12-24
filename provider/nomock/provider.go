@@ -89,7 +89,7 @@ func (p *TestingProvider) GetService(serviceName string) (model.Service, error) 
 }
 
 func (p *TestingProvider) createService(serviceConfig config.Service) (model.Service, error) {
-	newService := model.Service{Protocol: serviceConfig.Protocol}
+	newService := model.Service{}
 	userId, err := nomockutil.GetSubjectInToken(p.token)
 	if err != nil {
 		return newService, err
