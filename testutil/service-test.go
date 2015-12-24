@@ -1,15 +1,16 @@
 package testutil
 
 import (
-    "net/http"
+	"net/http"
 	"testing"
+
 	"github.com/bndr/gopencils"
 	"github.com/essentier/spickspan/model"
 )
 
-func SendRestGetToService(t *testing.T, serviceName string, 
+func SendRestGetToService(t *testing.T, serviceName string,
 	provider model.Provider, resourceName string) (interface{}, *http.Response) {
-    testRunner := NewNomockServiceTestRunner(t, serviceName, provider)
+	testRunner := NewNomockServiceTestRunner(t, serviceName, provider)
 	serviceTest := &RestGetServiceTest{ResourceName: resourceName}
 	testRunner.Run(serviceTest)
 	return serviceTest.Value, serviceTest.Response
@@ -20,13 +21,13 @@ type ServiceTest interface {
 }
 
 type RestGetServiceTest struct {
-    ResourceName string
-    Value interface{}
-    Response *http.Response
+	ResourceName string
+	Value        interface{}
+	Response     *http.Response
 }
 
 func (u *RestGetServiceTest) Execute(t *testing.T, service model.Service) {
- 	baseUrl := service.GetHttpUrl()
+	baseUrl := service.GetUrl()
 	var result interface{}
 	api := gopencils.Api(baseUrl)
 	res := api.Res(u.ResourceName, &result)
@@ -39,14 +40,14 @@ func (u *RestGetServiceTest) Execute(t *testing.T, service model.Service) {
 }
 
 type RestPostServiceTest struct {
-    ResourceName string
-    Payload interface{}
-    Value interface{}
-    Response *http.Response
+	ResourceName string
+	Payload      interface{}
+	Value        interface{}
+	Response     *http.Response
 }
 
 func (u *RestPostServiceTest) Execute(t *testing.T, service model.Service) {
- 	baseUrl := service.GetHttpUrl()
+	baseUrl := service.GetUrl()
 	var result interface{}
 	api := gopencils.Api(baseUrl)
 	res := api.Res(u.ResourceName, &result)
@@ -57,4 +58,3 @@ func (u *RestPostServiceTest) Execute(t *testing.T, service model.Service) {
 	u.Value = result
 	u.Response = res.Raw
 }
-

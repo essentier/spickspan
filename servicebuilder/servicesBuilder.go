@@ -42,8 +42,8 @@ func createServicesBuilder() (*servicesBuilder, error) {
 	}
 
 	sb := &servicesBuilder{config: configModel}
-	sb.init()
-	return sb, nil
+	err = sb.init()
+	return sb, err
 }
 
 type servicesBuilder struct {
@@ -80,9 +80,11 @@ func buildService(serviceConfig config.Service, providerUrl string,
 	resultsChan <- serviceBuildErr{serviceName: serviceConfig.ServiceName, err: err}
 }
 
-func (p *servicesBuilder) init() {
+func (p *servicesBuilder) init() error {
 	cloudProvider := p.config.CloudProvider
-	p.token = model.LoginToEssentier(cloudProvider.Url, cloudProvider.Username, cloudProvider.Password)
+	token, err := model.LoginToEssentier(cloudProvider.Url, cloudProvider.Username, cloudProvider.Password)
+	p.token = token
+	return err
 }
 
 func collectAllSourceServices(configModel config.Model) map[string]config.Service {
