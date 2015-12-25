@@ -21,7 +21,7 @@ type servicesBuildErr struct {
 func (s *servicesBuildErr) Error() string {
 	errStr := ""
 	for _, err := range s.errors {
-		errStr += err.serviceName + "failed to build with error: " + err.err.Error() + "\n"
+		errStr += err.serviceName + " failed to build with error: " + err.err.Error() + "\n"
 	}
 	return errStr
 }
