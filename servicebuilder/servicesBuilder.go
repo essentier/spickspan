@@ -32,7 +32,11 @@ func BuildAll() error {
 		return err
 	}
 	errors := builder.buildAllServices()
-	return &servicesBuildErr{errors: errors}
+	if len(errors) == 0 {
+		return nil
+	} else {
+		return &servicesBuildErr{errors: errors}
+	}
 }
 
 func createServicesBuilder() (*servicesBuilder, error) {
