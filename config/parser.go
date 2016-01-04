@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/essentier/nomockutil"
 )
 
 const SpickSpanConfigFile = "spickspan.json"
@@ -26,10 +28,10 @@ func GetConfig() (Model, error) {
 		return Model{}, err
 	}
 	log.Printf("config file path: %v", configFilePath)
-	return ParseConfigFile(configFilePath), nil
+	return ParseConfigFile(configFilePath)
 }
 
-func ParseConfigFile(filename string) Model {
+func ParseConfigFile(filename string) (Model, error) {
 	data, e := ioutil.ReadFile(filename)
 	if e != nil {
 		log.Printf("File error: %v\n", e)
@@ -40,24 +42,43 @@ func ParseConfigFile(filename string) Model {
 
 func adjustModel(model *Model, configFilePath string) {
 	filedir := filepath.Dir(configFilePath)
-	//adjustedServices := make(map[string]Service)
 	for name, service := range model.Services {
 		service.ServiceName = name
 		if service.ProjectSrcRoot != "" {
 			projectRoot := filepath.Join(filedir, service.ProjectSrcRoot)
 			service.ProjectSrcRoot = projectRoot
 		}
-		//adjustedServices[name] = service
 		model.Services[name] = service
 	}
 }
 
-func parseConfigData(data []byte, configFilePath string) Model {
+func validateModel(model *Model) error {
+	for name, service := range model.Services {
+		if service.ProjectSrcRoot != "" {
+			err := nomockutil.ValidateServiceName(name)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func parseConfigData(data []byte, configFilePath string) (Model, error) {
 	var config Model
-	json.Unmarshal(data, &config)
+	err := json.Unmarshal(data, &config)
+	if err != nil {
+		return config, err
+	}
+
+	err = validateModel(&config)
+	if err != nil {
+		return config, err
+	}
+
 	adjustModel(&config, configFilePath)
-	log.Printf("Results: %v\n", config)
-	return config
+	log.Printf("SpickSpan configurations: %v\n", config)
+	return config, nil
 }
 
 func findPathOfConfigFile() (string, error) {
