@@ -31,12 +31,7 @@ func BuildAll() error {
 	if err != nil {
 		return err
 	}
-	errors := builder.buildAllServices()
-	if len(errors) == 0 {
-		return nil
-	} else {
-		return &servicesBuildErr{errors: errors}
-	}
+	return builder.buildAllServices()
 }
 
 func createServicesBuilder() (*servicesBuilder, error) {
@@ -55,9 +50,18 @@ type servicesBuilder struct {
 	token  string
 }
 
-func (p *servicesBuilder) buildAllServices() []serviceBuildErr {
-	allServices := collectAllSourceServices(p.config)
-	return p.buildServices(allServices)
+func (p *servicesBuilder) buildAllServices() error {
+	allServices, err := collectAllSourceServices(p.config)
+	if err != nil {
+		return err
+	}
+
+	errs := p.buildServices(allServices)
+	if len(errs) == 0 {
+		return nil
+	} else {
+		return &servicesBuildErr{errors: errs}
+	}
 }
 
 func (p *servicesBuilder) buildServices(allServices map[string]config.Service) []serviceBuildErr {
@@ -91,13 +95,13 @@ func (p *servicesBuilder) init() error {
 	return err
 }
 
-func collectAllSourceServices(configModel config.Model) map[string]config.Service {
+func collectAllSourceServices(configModel config.Model) (map[string]config.Service, error) {
 	serviceMap := map[string]config.Service{}
-	collectSourceServices(configModel, serviceMap)
-	return serviceMap
+	err := collectSourceServices(configModel, serviceMap)
+	return serviceMap, err
 }
 
-func collectSourceServices(configModel config.Model, serviceMap map[string]config.Service) {
+func collectSourceServices(configModel config.Model, serviceMap map[string]config.Service) error {
 	for serviceName, serviceConfig := range configModel.Services {
 		if !serviceConfig.IsSourceProject() {
 			//log.Printf("Service %v is not a source project. Skip.", serviceName)
@@ -122,7 +126,15 @@ func collectSourceServices(configModel config.Model, serviceMap map[string]confi
 			continue
 		}
 
-		newConfigModel := config.ParseConfigFile(fullFileName)
-		collectSourceServices(newConfigModel, serviceMap)
+		newConfigModel, err := config.ParseConfigFile(fullFileName)
+		if err != nil {
+			return err
+		}
+
+		err = collectSourceServices(newConfigModel, serviceMap)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
