@@ -2,10 +2,20 @@ package testutil
 
 import (
 	"github.com/bndr/gopencils"
+	"github.com/essentier/spickspan"
 	"github.com/essentier/spickspan/model"
 )
 
-func CreateRestService(serviceName string, provider model.Provider) (*RestService, error) {
+var provider = spickspan.GetNomockProvider()
+
+func init() {
+	err := spickspan.BuildAll()
+	if err != nil {
+		panic("Failed to build projects. The error is " + err.Error())
+	}
+}
+
+func CreateRestService(serviceName string) (*RestService, error) {
 	service, err := provider.GetService(serviceName)
 	if err != nil {
 		return nil, err
