@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bndr/gopencils"
+	"github.com/essentier/gopencils"
 	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/go-errors/errors"
