@@ -7,7 +7,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/bndr/gopencils"
+	"github.com/essentier/gopencils"
 	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
@@ -56,8 +56,8 @@ func (p *TestingProvider) Release(service model.Service) error {
 		return nil
 	}
 
-	res := p.nomockApi.Res("nomockserver/services")
-	res = res.Id(service.Id)
+	res := p.nomockApi.NewChildResource("nomockserver/services", nil)
+	res = res.NewChildIdResource(service.Id)
 	res.SetHeader("Authorization", "Bearer "+p.token)
 	_, err := res.Delete()
 	return err
@@ -95,7 +95,7 @@ func (p *TestingProvider) createService(serviceConfig config.Service) (model.Ser
 		return newService, err
 	}
 
-	servicesResource := p.nomockApi.Res("nomockserver/services", &newService)
+	servicesResource := p.nomockApi.NewChildResource("nomockserver/services", &newService)
 	if serviceConfig.IsSourceProject() {
 		serviceConfig.ContainerImage = containerImagePrefix + userId + "_" + serviceConfig.ServiceName + ":latest"
 	}
