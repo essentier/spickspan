@@ -26,22 +26,22 @@ func (s *servicesBuildErr) Error() string {
 	return errStr
 }
 
-func BuildAll() error {
-	builder, err := createServicesBuilder()
+func BuildAllInConfig(config config.Model) error {
+	builder, err := createServicesBuilder(config)
 	if err != nil {
 		return err
 	}
 	return builder.buildAllServices()
 }
 
-func createServicesBuilder() (*servicesBuilder, error) {
-	configModel, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+func createServicesBuilder(configModel config.Model) (*servicesBuilder, error) {
+	// configModel, err := config.GetConfig()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	sb := &servicesBuilder{config: configModel}
-	err = sb.init()
+	err := sb.init()
 	return sb, err
 }
 

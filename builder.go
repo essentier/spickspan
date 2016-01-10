@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
 	"github.com/essentier/spickspan/servicebuilder"
 )
@@ -15,8 +16,12 @@ const (
 	dialTimeOut      = 5    //second
 )
 
-func BuildAll() error {
-	return servicebuilder.BuildAll()
+// func BuildAll() error {
+// 	return servicebuilder.BuildAll()
+// }
+
+func BuildAllInConfig(config config.Model) error {
+	return servicebuilder.BuildAllInConfig(config)
 }
 
 // Check the service once every waitTimePerCycle millisecond until timeout.

@@ -8,22 +8,22 @@ import (
 	"github.com/essentier/spickspan/provider/nomock"
 )
 
-func GetNomockProvider() (model.Provider, error) {
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+func GetNomockProvider(config config.Model) (model.Provider, error) {
+	// config, err := config.GetConfig()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	provider := nomock.CreateProvider(config)
-	provider.Init()
-	return provider, nil
+	err := provider.Init()
+	return provider, err
 }
 
-func GetDefaultKubeRegistry() (*model.ProviderRegistry, error) {
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+func GetDefaultKubeRegistry(config config.Model) (*model.ProviderRegistry, error) {
+	// config, err := config.GetConfig()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	registry := &model.ProviderRegistry{}
 	registry.RegisterProvider(nomock.CreateProvider(config))
