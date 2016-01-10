@@ -7,19 +7,20 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
-	"github.com/essentier/spickspan/provider"
 )
 
-func CreateProvider() model.Provider {
-	return &kubeProvider{}
+func CreateProvider(config config.Model) model.Provider {
+	return &kubeProvider{config: config}
 }
 
 type kubeProvider struct {
+	config config.Model
 }
 
 func (p *kubeProvider) GetService(serviceName string) (model.Service, error) {
-	service, serviceConfig, err := provider.GetServiceAndConfig(serviceName)
+	service, serviceConfig, err := p.config.GetServiceAndConfig(serviceName)
 	if err != nil || service.Id != "" {
 		return service, err
 	}

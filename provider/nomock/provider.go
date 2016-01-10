@@ -11,7 +11,6 @@ import (
 	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
-	"github.com/essentier/spickspan/provider"
 )
 
 const (
@@ -19,22 +18,18 @@ const (
 	containerImagePrefix string = "gcr.io/essentier-nomock/" // IP:5000/nomock/
 )
 
-func CreateProvider() model.Provider {
-	return &TestingProvider{}
+func CreateProvider(config config.Model) model.Provider {
+	return &TestingProvider{config: config}
 }
 
 type TestingProvider struct {
+	config    config.Model
 	nomockApi *gopencils.Resource
 	token     string
 }
 
 func (p *TestingProvider) Init() error {
-	config, err := provider.GetConfig()
-	if err != nil {
-		return err
-	}
-
-	cloudProvider := config.CloudProvider
+	cloudProvider := p.config.CloudProvider
 	token, err := model.LoginToEssentier(cloudProvider.Url, cloudProvider.Username, cloudProvider.Password)
 	if err != nil {
 		return err
@@ -67,7 +62,7 @@ func (p *TestingProvider) GetService(serviceName string) (model.Service, error) 
 	//When this provider is asked for a service,
 	//it will find the service's configuration in the config file
 	//and use that configuration to start up the service in the testing cloud.
-	service, serviceConfig, err := provider.GetServiceAndConfig(serviceName)
+	service, serviceConfig, err := p.config.GetServiceAndConfig(serviceName)
 	if err != nil || service.Id != "" {
 		return service, err
 	}
