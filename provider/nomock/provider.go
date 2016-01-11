@@ -102,5 +102,5 @@ func (p *TestingProvider) createService(serviceConfig config.Service) (model.Ser
 		log.Printf("Failed to call the service rest api. Error is: %v. Error string is %v", err, err.Error())
 	}
 	log.Printf("service is: %v", newService)
-	return newService, nil
+	return newService, err
 }
