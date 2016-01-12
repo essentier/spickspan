@@ -1,7 +1,6 @@
 package spickspan
 
 import (
-	"github.com/essentier/spickspan"
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
 	"github.com/essentier/spickspan/probe"
@@ -32,7 +31,7 @@ func GetDefaultServiceProvider() (model.Provider, error) {
 		return nil, err
 	}
 
-	registry, err := spickspan.GetDefaultKubeRegistry(config)
+	registry, err := GetDefaultKubeRegistry(config)
 	if err != nil {
 		return nil, err
 	}
