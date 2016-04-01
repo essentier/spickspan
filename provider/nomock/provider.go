@@ -15,7 +15,7 @@ import (
 
 const (
 	noReleaseServiceID   string = "noReleaseServiceID"
-	containerImagePrefix string = "gcr.io/essentier-nomock/" // IP:5000/nomock/
+	containerImagePrefix string = "gcr.io/divine-actor-126805/" // IP:5000/nomock/
 )
 
 func CreateProvider(config config.Model) model.Provider {

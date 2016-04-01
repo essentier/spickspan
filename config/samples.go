@@ -28,8 +28,9 @@ var testConfig1 string = `
     }
 }`
 
-func CreateTestConfigModel() Model {
-	return parseConfigData([]byte(testConfig1), "/abc/ssconfig.json")
+func CreateTestConfigModel() (Model, error) {
+	model, err := parseConfigData([]byte(testConfig1), "/abc/ssconfig.json")
+	return model, err
 }
 
 var apiGatewayConfig string = `
@@ -59,5 +60,6 @@ var apiGatewayConfig string = `
 func CreateApiGatewayConfigModel() Model {
 	fullFilePath, _ := filepath.Abs("../../../api-gateway-example/spickspan.json")
 	log.Printf("file path of api gateway spickspan.json: %v", fullFilePath)
-	return parseConfigData([]byte(apiGatewayConfig), fullFilePath)
+	model, _ := parseConfigData([]byte(apiGatewayConfig), fullFilePath)
+	return model
 }

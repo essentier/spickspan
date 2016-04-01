@@ -7,7 +7,6 @@ import (
 	"github.com/essentier/spickspan/provider/kube"
 	"github.com/essentier/spickspan/provider/local"
 	"github.com/essentier/spickspan/provider/nomock"
-	"github.com/essentier/spickspan/servicebuilder"
 	"github.com/go-errors/errors"
 )
 
@@ -51,10 +50,6 @@ func GetMongoDBService(provider model.Provider, serviceName string) (model.Servi
 	} else {
 		return mgoService, errors.Errorf("Service is not ready yet. The service is %v", mgoService)
 	}
-}
-
-func BuildAllInConfig(config config.Model) error {
-	return servicebuilder.BuildAllInConfig(config)
 }
 
 func GetNomockProvider(config config.Model) (model.Provider, error) {
