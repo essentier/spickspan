@@ -18,7 +18,7 @@ const SpickSpanConfigFile = "spickspan.json"
 var ssconfig string
 
 func init() {
-	flag.StringVar(&ssconfig, "ssconfig", ".", "configuration for spickspan")
+	flag.StringVar(&ssconfig, "spickspan", ".", "configuration for spickspan")
 }
 
 func GetConfig() (Model, error) {
