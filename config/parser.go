@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/essentier/nomockutil"
 )
@@ -94,19 +93,23 @@ func findPathOfConfigFile() (string, error) {
 	}
 
 	configFilePath = filepath.Clean(configFilePath)
+	filedir := filepath.Dir(configFilePath)
+	filename := filepath.Base(configFilePath)
+	log.Printf("Starting to find config file at %v and up the directory hierarchy.", filedir)
+	return findFileInParentDirs(filedir, filename)
 
-	if strings.HasSuffix(configFilePath, SpickSpanConfigFile) {
-		filedir := filepath.Dir(configFilePath)
-		log.Printf("Starting to find config file at %v and up the directory hierarchy.", filedir)
-		return findFileInParentDirs(filedir, SpickSpanConfigFile)
-	} else {
-		_, err := os.Stat(configFilePath)
-		if os.IsNotExist(err) {
-			return "", errors.New("Could not find config file.")
-		} else {
-			return configFilePath, nil
-		}
-	}
+	// if strings.HasSuffix(configFilePath, SpickSpanConfigFile) {
+	// 	filedir := filepath.Dir(configFilePath)
+	// 	log.Printf("Starting to find config file at %v and up the directory hierarchy.", filedir)
+	// 	return findFileInParentDirs(filedir, SpickSpanConfigFile)
+	// } else {
+	// 	_, err := os.Stat(configFilePath)
+	// 	if os.IsNotExist(err) {
+	// 		return "", errors.New("Could not find config file.")
+	// 	} else {
+	// 		return configFilePath, nil
+	// 	}
+	// }
 }
 
 func findFileInParentDirs(filedir string, filename string) (string, error) {
@@ -118,6 +121,8 @@ func findFileInParentDirs(filedir string, filename string) (string, error) {
 			return "", errors.New("Could not find config file.")
 		}
 		return findFileInParentDirs(parentFiledir, filename)
+	} else if err != nil {
+		return "", err
 	} else {
 		return fullFileName, nil
 	}
