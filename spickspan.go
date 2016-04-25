@@ -20,6 +20,7 @@ func GetHttpService(provider model.Provider, serviceName string, readinessPath s
 	if serviceReady {
 		return service, nil
 	} else {
+		defer provider.Release(service)
 		return service, errors.Errorf("Service is not ready yet. The service is %v", service)
 	}
 }
@@ -48,6 +49,7 @@ func GetMongoDBService(provider model.Provider, serviceName string) (model.Servi
 	if serviceReady {
 		return mgoService, nil
 	} else {
+		defer provider.Release(mgoService)
 		return mgoService, errors.Errorf("Service is not ready yet. The service is %v", mgoService)
 	}
 }
