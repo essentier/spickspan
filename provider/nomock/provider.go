@@ -8,14 +8,12 @@ import (
 	"syscall"
 
 	"github.com/essentier/gopencils"
-	"github.com/essentier/nomockutil"
 	"github.com/essentier/spickspan/config"
 	"github.com/essentier/spickspan/model"
 )
 
 const (
-	noReleaseServiceID   string = "noReleaseServiceID"
-	containerImagePrefix string = "gcr.io/divine-actor-126805/" // IP:5000/nomock/
+	noReleaseServiceID string = "noReleaseServiceID"
 )
 
 func CreateProvider(config config.Model) model.Provider {
@@ -85,19 +83,16 @@ func (p *TestingProvider) GetService(serviceName string) (model.Service, error) 
 
 func (p *TestingProvider) createService(serviceConfig config.Service) (model.Service, error) {
 	newService := model.Service{}
-	userId, err := nomockutil.GetSubjectInToken(p.token)
-	if err != nil {
-		return newService, err
-	}
+	//userId, err := nomockutil.GetSubjectInToken(p.token)
+	// if err != nil {
+	// 	return newService, err
+	// }
 
 	servicesResource := p.nomockApi.NewChildResource("nomockserver/services", &newService)
-	if serviceConfig.IsSourceProject() {
-		serviceConfig.ContainerImage = containerImagePrefix + userId + "_" + serviceConfig.ServiceName + ":latest"
-	}
 	log.Printf("service config %v", serviceConfig)
 
 	servicesResource.SetHeader("Authorization", "Bearer "+p.token)
-	_, err = servicesResource.Post(serviceConfig)
+	_, err := servicesResource.Post(serviceConfig)
 	if err != nil {
 		log.Printf("Failed to call the service rest api. Error is: %v. Error string is %v", err, err.Error())
 	}
