@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/essentier/spickspan/model"
@@ -20,6 +21,10 @@ const (
 // Default timeout is totalWaitTime seconds.
 func ProbeHttpService(service model.Service, path string) bool {
 	log.Printf("probing service %v", service.Id)
+	if strings.TrimSpace(service.IP) == "" {
+		return false
+	}
+
 	timeOutChan := make(chan string)
 	serviceUpChan := make(chan string)
 	go probeHttpService(service, path, timeOutChan, serviceUpChan)

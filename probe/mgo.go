@@ -3,6 +3,7 @@ package probe
 import (
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -14,6 +15,10 @@ import (
 // Default timeout is totalWaitTime seconds.
 func ProbeMgoService(service model.Service) bool {
 	log.Printf("probing service %v", service.Id)
+	if strings.TrimSpace(service.IP) == "" {
+		return false
+	}
+
 	timeOutChan := make(chan string)
 	serviceUpChan := make(chan string)
 	go probeMgoService(service, timeOutChan, serviceUpChan)
